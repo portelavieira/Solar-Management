@@ -34,7 +34,7 @@ export function StatCard({
               width: 48,
               height: 48,
               borderRadius: 2,
-              bgcolor: `${accentColor}1A`, // 10% opacity
+              bgcolor: `${accentColor}1A`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

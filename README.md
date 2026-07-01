@@ -1,23 +1,22 @@
 # ☀️ Solar Management
 
-Sistema de gestão de projetos de energia solar desenvolvido como projeto de portfólio, com foco em demonstrar integração completa entre front-end moderno e back-end real.
+Sistema interno para gestão de projetos de instalação de energia solar — controle de clientes, equipes técnicas e dados por instalação, com mapa geográfico, funil de conversão e relatório executivo exportável em PDF.
 
-![Dashboard Demo](public/demo.gif)
-
----
-
-## 🚀 Funcionalidades
-
-- **Dashboard** com cards de resumo, gráfico de projetos por mês, funil de status e mapa interativo do Ceará
-- **Listagem de projetos** com busca, filtro por status e paginação
-- **CRUD completo** de projetos e instalações com persistência real no banco de dados
-- **Autenticação** via Supabase Auth — visualização pública, edição restrita a usuários autenticados
-- **Exportação de relatório em PDF** com sumário executivo e tabela de projetos
-- **Design responsivo** com sidebar adaptável para mobile
+![Demo do sistema](public/demo.gif)
 
 ---
 
-## 🛠️ Stack
+## Funcionalidades
+
+- **Dashboard** com indicadores de negócio (projetos, potência instalada, valor total), gráfico mensal filtrável por ano, funil de conversão por etapa e mapa interativo com localização de cada projeto no Ceará
+- **Gestão de projetos** com busca por cliente ou cidade, filtro por status e paginação
+- **CRUD completo** de projetos e dados de instalação com persistência real em banco de dados PostgreSQL
+- **Relatório em PDF** exportável com sumário executivo, distribuição por status e tabela de projetos filtrada por ano
+- **Controle de acesso** via Supabase Auth — visualização pública, criação/edição/exclusão restritas a usuários autenticados
+
+---
+
+## Stack
 
 | Camada | Tecnologia |
 |---|---|
@@ -33,38 +32,38 @@ Sistema de gestão de projetos de energia solar desenvolvido como projeto de por
 
 ---
 
-## 📁 Estrutura do projeto
+## Estrutura do projeto
 
 ```
 src/
 ├── components/
-│   ├── layout/         # Sidebar, TopBar
-│   └── shared/         # InstallationForm, ProjectForm, ProjectMap, StatCard, StatusChip
+│   ├── layout/             # Sidebar, TopBar
+│   └── shared/             # InstallationForm, ProjectForm, ProjectMap, StatCard, StatusChip
 ├── lib/
-│   ├── AuthContext.tsx  # Contexto global de autenticação
+│   ├── AuthContext.tsx     # Contexto global de autenticação
 │   ├── supabaseClient.ts
-│   └── useExportPDF.ts  # Hook de geração de PDF
+│   └── useExportPDF.ts     # Hook de geração de relatório PDF
 ├── pages/
 │   ├── Dashboard.tsx
 │   ├── Login.tsx
 │   ├── ProjectDetail.tsx
 │   └── Projects.tsx
 ├── services/
-│   └── projectService.ts  # Camada de acesso ao Supabase
+│   └── projectService.ts   # Camada de acesso ao Supabase (CRUD + instalações)
 ├── mock/
-│   └── cearaCoordinates.ts  # Coordenadas das cidades do Ceará
+│   └── cearaCoordinates.ts # Coordenadas das cidades do Ceará
 └── types/
     └── index.ts
 ```
 
 ---
 
-## ⚙️ Como rodar localmente
+## Como rodar localmente
 
 ### Pré-requisitos
 
 - Node.js 18+
-- Conta no [Supabase](https://supabase.com) com o projeto configurado
+- Conta no [Supabase](https://supabase.com) com um projeto criado
 
 ### 1. Clone o repositório
 
@@ -81,7 +80,7 @@ npm install
 
 ### 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto com base no `.env.example`:
+Crie um arquivo `.env` na raiz com base no `.env.example`:
 
 ```env
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -92,15 +91,20 @@ Os valores estão disponíveis em **Project Settings → Data API** no painel do
 
 ### 4. Configure o banco de dados
 
-No SQL Editor do Supabase, execute os scripts na seguinte ordem:
+No **SQL Editor** do Supabase, execute os scripts abaixo na ordem indicada.
 
-**Sequences:**
+<details>
+<summary> Sequences </summary>
+
 ```sql
 create sequence projects_seq start 19;
 create sequence installations_seq start 8;
 ```
+</details>
 
-**Tabelas:**
+<details>
+<summary>Tabelas</summary>
+
 ```sql
 create type project_status as enum ('Em andamento', 'Concluído', 'Aguardando');
 
@@ -133,23 +137,43 @@ create index idx_projects_status on projects(status);
 create index idx_projects_city on projects(city);
 create index idx_installations_project_id on installations(project_id);
 ```
+</details>
 
-**Políticas de acesso (RLS):**
+<details>
+<summary>Políticas de acesso (RLS)</summary>
+
 ```sql
 -- Leitura pública
-create policy "Leitura pública de projetos" on projects for select to anon, authenticated using (true);
-create policy "Leitura pública de instalações" on installations for select to anon, authenticated using (true);
+create policy "Leitura pública de projetos"
+  on projects for select to anon, authenticated using (true);
+
+create policy "Leitura pública de instalações"
+  on installations for select to anon, authenticated using (true);
 
 -- Escrita apenas para autenticados
-create policy "Insert projetos autenticados" on projects for insert to authenticated with check (true);
-create policy "Update projetos autenticados" on projects for update to authenticated using (true) with check (true);
-create policy "Delete projetos autenticados" on projects for delete to authenticated using (true);
-create policy "Insert instalações autenticados" on installations for insert to authenticated with check (true);
-create policy "Update instalações autenticados" on installations for update to authenticated using (true) with check (true);
-create policy "Delete instalações autenticados" on installations for delete to authenticated using (true);
-```
+create policy "Insert projetos autenticados"
+  on projects for insert to authenticated with check (true);
 
-**Dados de exemplo (opcional):**
+create policy "Update projetos autenticados"
+  on projects for update to authenticated using (true) with check (true);
+
+create policy "Delete projetos autenticados"
+  on projects for delete to authenticated using (true);
+
+create policy "Insert instalações autenticados"
+  on installations for insert to authenticated with check (true);
+
+create policy "Update instalações autenticados"
+  on installations for update to authenticated using (true) with check (true);
+
+create policy "Delete instalações autenticados"
+  on installations for delete to authenticated using (true);
+```
+</details>
+
+<details>
+<summary>Dados de exemplo (opcional)</summary>
+
 ```sql
 insert into projects (id, client_name, address, city, lat, lng, installed_power, status, start_date, estimated_value, responsible) values
 ('proj-001', 'Supermercado Boa Esperança', 'Av. Washington Soares, 1321', 'Fortaleza', -3.7327, -38.5270, 48.4, 'Concluído', '2024-01-10', 98000, 'Carlos Menezes'),
@@ -178,12 +202,13 @@ insert into installations (id, project_id, installed_at, panel_count, inverter_m
 ('inst-005', 'proj-005', '2024-05-30', 55, 'Huawei SUN2000-20KTL-M3', 'Projeto com incentivo de eficiência energética municipal. Telhado de fibrocimento reforçado.'),
 ('inst-007', 'proj-007', '2024-06-20', 41, 'Deye SUN-12K-SG04LP3', 'Gerador de backup integrado ao sistema. UPS configurado para equipamentos críticos da clínica.');
 ```
+</details>
 
-### 5. Crie um usuário para acessar o sistema
+### 5. Crie um usuário administrador
 
-No painel do Supabase, vá em **Authentication → Users → Add user → Create new user** e cadastre um e-mail e senha. Esse usuário será usado para fazer login no app e habilitar as ações de escrita.
+No painel do Supabase, acesse **Authentication → Users → Add user → Create new user** e cadastre e-mail e senha. Esse usuário habilita as ações de escrita no sistema.
 
-### 6. Rode o projeto
+### 6. Inicie o servidor de desenvolvimento
 
 ```bash
 npm run dev
@@ -193,12 +218,12 @@ Acesse `http://localhost:5173`.
 
 ---
 
-## 🔐 Autenticação
+## Autenticação
 
-O sistema permite navegação pública sem login. Para habilitar criação, edição e exclusão de projetos, crie um usuário conforme o passo 5 acima e faça login pelo botão **"Entrar"** no canto superior direito.
+O sistema permite navegação e leitura de dados sem login. Para criar, editar ou excluir projetos, faça login pelo botão **"Entrar"** no canto superior direito com o usuário criado no passo 5.
 
 ---
 
-## 📄 Licença
+## Contato
 
-Projeto desenvolvido para fins de portfólio.
+[LinkedIn](https://www.linkedin.com/in/louise-portela-vieira/) · [GitHub](https://github.com/portelavieira)

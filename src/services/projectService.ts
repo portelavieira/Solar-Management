@@ -2,7 +2,6 @@ import { supabase } from '../lib/supabaseClient';
 import { cearaCoordinates } from '../mock/cearaCoordinates';
 import { Installation, InstallationFormData, Project, ProjectFormData } from '../types';
 
-// Linhas como vêm do Postgres (snake_case)
 interface ProjectRow {
   id: string;
   client_name: string;

@@ -27,7 +27,6 @@ export function useExportPDF() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const now = new Date().toLocaleDateString('pt-BR');
 
-    // ── Header ────────────────────────────────────────────────────────────────
     doc.setFillColor(245, 166, 35); // #F5A623
     doc.rect(0, 0, pageWidth, 18, 'F');
 
@@ -45,9 +44,8 @@ export function useExportPDF() {
     doc.setFontSize(8);
     doc.text(`Gerado em ${now}`, pageWidth - 12, 12, { align: 'right' });
 
-    // ── Summary cards ─────────────────────────────────────────────────────────
     const cardY = 24;
-    const cardW = (pageWidth - 24 - 9) / 4; // 4 cards with gaps
+    const cardW = (pageWidth - 24 - 9) / 4;
     const cards = [
       { label: 'Total de projetos', value: String(stats.total) },
       { label: 'Concluídos', value: String(stats.concluidos) },
@@ -72,7 +70,6 @@ export function useExportPDF() {
       doc.text(card.value, x + cardW / 2, cardY + 13, { align: 'center' });
     });
 
-    // ── Status breakdown ──────────────────────────────────────────────────────
     const statusY = cardY + 22;
     const statusCounts = {
       'Concluído': projects.filter((p) => p.status === 'Concluído').length,
@@ -102,7 +99,6 @@ export function useExportPDF() {
       statusX += 48;
     });
 
-    // ── Projects table ────────────────────────────────────────────────────────
     autoTable(doc, {
       startY: statusY + 16,
       head: [['Cliente', 'Cidade', 'Status', 'Potência (kWp)', 'Valor estimado', 'Responsável', 'Início']],
@@ -133,7 +129,6 @@ export function useExportPDF() {
         2: { cellWidth: 30 },
       },
       didDrawCell: (data) => {
-        // Color the status cell text
         if (data.section === 'body' && data.column.index === 2) {
           const status = projects[data.row.index]?.status;
           if (status) {
@@ -151,7 +146,6 @@ export function useExportPDF() {
       margin: { left: 12, right: 12 },
     });
 
-    // ── Footer ────────────────────────────────────────────────────────────────
     const totalPages = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);

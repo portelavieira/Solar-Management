@@ -54,7 +54,6 @@ function buildFunnelData(projects: Project[]) {
   const avgDays: Record<string, number> = {};
   const now = new Date();
 
-  // Estimate avg days in each stage based on start date and (for concluded) a proxy
   stageOrder.forEach((status) => {
     const filtered = projects.filter((p) => p.status === status);
     if (filtered.length === 0) {
@@ -64,7 +63,6 @@ function buildFunnelData(projects: Project[]) {
     if (status === 'Concluído') {
       const days = filtered.map((p) => {
         const start = new Date(p.startDate);
-        // Assume ~60 days after start for concluded projects as rough proxy
         const estEnd = new Date(start);
         estEnd.setDate(start.getDate() + 60);
         return Math.round((estEnd.getTime() - start.getTime()) / 86400000);
