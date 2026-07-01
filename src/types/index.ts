@@ -33,3 +33,10 @@ export interface Installation {
   inverterModel: string;
   notes: string;
 }
+
+export interface InstallationFormData {
+  installedAt: string;
+  panelCount: number;
+  inverterModel: string;
+  notes: string;
+}

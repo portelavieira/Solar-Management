@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { cearaCoordinates } from '../mock/cearaCoordinates';
-import { Installation, Project, ProjectFormData } from '../types';
+import { Installation, InstallationFormData, Project, ProjectFormData } from '../types';
 
 // Linhas como vêm do Postgres (snake_case)
 interface ProjectRow {
@@ -131,5 +131,37 @@ export const installationService = {
       .maybeSingle();
     if (error) throw error;
     return data ? toInstallation(data as InstallationRow) : undefined;
+  },
+
+  create: async (projectId: string, data: InstallationFormData): Promise<Installation> => {
+    const { data: inserted, error } = await supabase
+      .from('installations')
+      .insert({
+        project_id: projectId,
+        installed_at: data.installedAt,
+        panel_count: data.panelCount,
+        inverter_model: data.inverterModel,
+        notes: data.notes || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return toInstallation(inserted as InstallationRow);
+  },
+
+  update: async (id: string, data: InstallationFormData): Promise<Installation> => {
+    const { data: updated, error } = await supabase
+      .from('installations')
+      .update({
+        installed_at: data.installedAt,
+        panel_count: data.panelCount,
+        inverter_model: data.inverterModel,
+        notes: data.notes || null,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return toInstallation(updated as InstallationRow);
   },
 };

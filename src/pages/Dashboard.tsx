@@ -2,8 +2,10 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -25,6 +27,7 @@ import {
 } from 'recharts';
 import { ProjectMap } from '../components/shared/ProjectMap';
 import { StatCard } from '../components/shared/StatCard';
+import { useExportPDF } from '../lib/useExportPDF';
 import { projectService } from '../services/projectService';
 import { Project } from '../types';
 
@@ -96,6 +99,8 @@ export function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const { exportReport } = useExportPDF();
+
   const availableYears = useMemo(() => {
     const years = [...new Set(projects.map((p) => new Date(p.startDate).getFullYear()))];
     return years.sort((a, b) => b - a);
@@ -143,6 +148,18 @@ export function Dashboard() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Page header with export button */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2.5 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<PictureAsPdfIcon />}
+          onClick={() => exportReport(filteredByYear, stats, effectiveYear)}
+        >
+          Exportar PDF
+        </Button>
+      </Box>
+
       {/* Stats row */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} lg={3}>

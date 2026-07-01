@@ -20,10 +20,11 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { InstallationForm } from '../components/shared/InstallationForm';
 import { ProjectForm } from '../components/shared/ProjectForm';
 import { StatusChip } from '../components/shared/StatusChip';
 import { installationService, projectService } from '../services/projectService';
-import { Installation, Project, ProjectFormData } from '../types';
+import { Installation, InstallationFormData, Project, ProjectFormData } from '../types';
 import { useAuth } from '../lib/AuthContext';
 
 interface InfoRowProps {
@@ -61,6 +62,7 @@ export function ProjectDetail() {
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [installationOpen, setInstallationOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const load = (projectId: string) => {
@@ -89,6 +91,19 @@ export function ProjectDetail() {
     await projectService.update(id, data);
     setEditOpen(false);
     setSnackbar('Projeto atualizado com sucesso!');
+    load(id);
+  };
+
+  const handleInstallationSave = async (data: InstallationFormData) => {
+    if (!id) return;
+    if (installation) {
+      await installationService.update(installation.id, data);
+      setSnackbar('Instalação atualizada com sucesso!');
+    } else {
+      await installationService.create(id, data);
+      setSnackbar('Instalação registrada com sucesso!');
+    }
+    setInstallationOpen(false);
     load(id);
   };
 
@@ -210,9 +225,20 @@ export function ProjectDetail() {
         <Grid item xs={12} md={6}>
           <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#1C1C2E' }}>
-                Dados de Instalação
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1C1C2E' }}>
+                  Dados de Instalação
+                </Typography>
+                {session && (
+                  <Button
+                    size="small"
+                    startIcon={<EditIcon fontSize="small" />}
+                    onClick={() => setInstallationOpen(true)}
+                  >
+                    {installation ? 'Editar' : 'Registrar'}
+                  </Button>
+                )}
+              </Box>
               <Divider sx={{ mb: 1 }} />
 
               {installation ? (
@@ -298,6 +324,18 @@ export function ProjectDetail() {
               onCancel={() => setEditOpen(false)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Installation dialog */}
+      <Dialog open={installationOpen} onClose={() => setInstallationOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{installation ? 'Editar Instalação' : 'Registrar Instalação'}</DialogTitle>
+        <DialogContent>
+          <InstallationForm
+            initial={installation ?? undefined}
+            onSave={handleInstallationSave}
+            onCancel={() => setInstallationOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 

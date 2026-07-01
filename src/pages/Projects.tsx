@@ -23,6 +23,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
@@ -49,7 +50,9 @@ export function Projects() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const load = () => {
     setLoading(true);
@@ -64,6 +67,7 @@ export function Projects() {
   useEffect(load, []);
 
   const filtered = useMemo(() => {
+    setPage(0);
     return projects.filter((p) => {
       const matchesSearch =
         p.clientName.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,6 +76,8 @@ export function Projects() {
       return matchesSearch && matchesStatus;
     });
   }, [projects, search, filterStatus]);
+
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const openCreate = () => {
     setEditingProject(null);
@@ -86,10 +92,10 @@ export function Projects() {
   const handleSave = async (data: ProjectFormData) => {
     if (editingProject) {
       await projectService.update(editingProject.id, data);
-      setSnackbar('Projeto atualizado com sucesso!');
+      setSnackbar({ message: 'Projeto atualizado com sucesso!', severity: 'success' });
     } else {
       await projectService.create(data);
-      setSnackbar('Projeto criado com sucesso!');
+      setSnackbar({ message: 'Projeto criado com sucesso!', severity: 'success' });
     }
     setDialogOpen(false);
     load();
@@ -98,10 +104,15 @@ export function Projects() {
   const handleDelete = async (id: string) => {
     try {
       await projectService.delete(id);
-      setSnackbar('Projeto excluído com sucesso!');
+      setSnackbar({ message: 'Projeto excluído com sucesso!', severity: 'success' });
       load();
-    } catch {
-      setSnackbar('Erro ao excluir projeto.');
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === '42501') {
+        setSnackbar({ message: 'Sem permissão para excluir. Esta ação é restrita ao administrador.', severity: 'error' });
+      } else {
+        setSnackbar({ message: 'Erro ao excluir projeto. Tente novamente.', severity: 'error' });
+      }
     }
     setDeletingId(null);
   };
@@ -190,7 +201,7 @@ export function Projects() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((project) => (
+                  paginated.map((project) => (
                     <TableRow
                       key={project.id}
                       hover
@@ -257,12 +268,21 @@ export function Projects() {
             </Table>
           </TableContainer>
 
-          <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="caption" color="text.secondary">
-              {filtered.length} projeto{filtered.length !== 1 ? 's' : ''} encontrado
-              {filtered.length !== 1 ? 's' : ''}
-            </Typography>
-          </Box>
+          <TablePagination
+            component="div"
+            count={filtered.length}
+            page={page}
+            onPageChange={(_e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[5, 10, 25]}
+            labelRowsPerPage="Linhas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+          />
         </Card>
       )}
 
@@ -303,11 +323,19 @@ export function Projects() {
       {/* Snackbar feedback */}
       <Snackbar
         open={!!snackbar}
-        autoHideDuration={4000}
+        autoHideDuration={snackbar?.severity === 'error' ? 6000 : 4000}
         onClose={() => setSnackbar(null)}
-        message={snackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      />
+      >
+        <Alert
+          onClose={() => setSnackbar(null)}
+          severity={snackbar?.severity ?? 'success'}
+          variant="filled"
+          sx={{ minWidth: 320 }}
+        >
+          {snackbar?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
